@@ -87,9 +87,6 @@ _ , UNIQUES = np.unique(TRANS, return_index = True)
 WORDS = WORDS[UNIQUES]
 SCORES = score_calc(WORDS)
 SORTED_WORDS = WORDS[SCORES.argsort()][::-1]
-#SCORES = score_calc(SORTED_WORDS)
-#_ , UNIQUES = np.unique(SCORES, return_index=True)
-#SORTED_WORDS = SORTED_WORDS[UNIQUES][::-1]
 np.savetxt(WORDS_PATH(), SORTED_WORDS, fmt='%s')
 
 
