@@ -48,7 +48,6 @@ v_ord = np.vectorize(v_ord)
 
 
 
-
 def DATA_PATH():
     return os.path.join(os.getcwd(),'word_data')
 
@@ -65,7 +64,6 @@ def MASK_PATH():
     return os.path.join(DATA_PATH(), 'wordle_word_mask.txt')
 
 
-
 # Calculate and save weights to .txt
 WEIGHTS = np.zeros(26,dtype=np.int64)
 f = open(WORDLE_PATH(),'r')
@@ -78,7 +76,7 @@ for ind in range(len(g)):
 f.close()
 np.savetxt(WEIGHTS_PATH(), WEIGHTS, fmt='%s')
 
-# Sort the wordle words by score (non-unique removed) and write to .txt
+# Sort the wordle words by score (non-uniques removed) and write to .txt
 f = open(WORDLE_PATH(),'r')
 WORDS = np.asarray(f.read().splitlines())
 f.close()
@@ -88,7 +86,6 @@ WORDS = WORDS[UNIQUES]
 SCORES = score_calc(WORDS)
 SORTED_WORDS = WORDS[SCORES.argsort()][::-1]
 np.savetxt(WORDS_PATH(), SORTED_WORDS, fmt='%s')
-
 
 # Calculate the mask for each letter and write its transpose to .txt
 WORD_MASK = np.ones((26,len(SORTED_WORDS)), dtype=np.int8)

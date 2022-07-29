@@ -20,40 +20,14 @@ the triplet contain letters from any of the other words.
 """
 
 import numpy as np
-import os
-from make_data import DATA_PATH, WORDLE_PATH, WEIGHTS_PATH, WORDS_PATH, MASK_PATH
-
-# -----------------------------------------------------------------------------
-# CUSTOM FUNCTIONS
-# -----------------------------------------------------------------------------
-
-# A vectorized score calculator
-def score_calc(word_):
-    A = np.ones(26,dtype=np.int64)
-    for letter in word_:
-        A[ord(letter)-97] *= 0
-    A = -1*(A-1)
-    score = sum(A*WEIGHTS)
-    return score
-score_calc = np.vectorize(score_calc)
-
-
-# Vectorize ord() and set 'a' to 0
-def vect_ord(character):
-    return ord(character)-97
-vect_ord = np.vectorize(vect_ord)
-
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
+from make_data import score_calc, v_ord, WEIGHTS_PATH, WORDS_PATH, MASK_PATH
 
 
 # this seems like a daunting series of loops, but the break conditions actually
 # mean the total number of calculations is very small
 WEIGHTS = np.loadtxt(WEIGHTS_PATH(), dtype=np.int64)
 SORTED_WORDS = np.loadtxt(WORDS_PATH(), dtype=str)
-WORD_MASK = np.loadtxt(MASK_PATH())
-WORD_MASK = WORD_MASK.T
+WORD_MASK = np.loadtxt(MASK_PATH()).T
 SCORES = score_calc(SORTED_WORDS)
 MAX_SCORE = SCORES[0]
 BATCH_1 = SORTED_WORDS[SCORES >= MAX_SCORE//3]
@@ -61,7 +35,7 @@ SCORES_1 = SCORES[:len(BATCH_1)]
 for word_1, score_1 in zip(BATCH_1, SCORES_1):
     if score_1 < MAX_SCORE//3:
         break
-    letter_ords_1 = vect_ord(list(word_1)) 
+    letter_ords_1 = v_ord(list(word_1)) 
     first_mask = np.prod(WORD_MASK[letter_ords_1], axis=0)
     first_mask = first_mask != 0
     BATCH_2 = SORTED_WORDS[first_mask]
@@ -71,7 +45,7 @@ for word_1, score_1 in zip(BATCH_1, SCORES_1):
     for word_2, score_2 in zip(BATCH_2, SCORES_2):
         if score_2 < (MAX_SCORE-score_1)//2:
             break
-        letter_ords_2 = vect_ord(list(word_2))
+        letter_ords_2 = v_ord(list(word_2))
         second_mask = np.prod(WORD_MASK[letter_ords_2], axis=0)
         second_mask = second_mask != 0
         second_mask = first_mask*second_mask
