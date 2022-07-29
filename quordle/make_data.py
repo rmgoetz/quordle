@@ -7,33 +7,6 @@ very similar to Wordle. The list of acceptable words for the game is available
 as a .txt from here: 
     https://gist.github.com/dracos/dd0668f281e685bad51479e5acaadb93
     
-    
-    
-    
-    
-IMPORTANT NOTE:
-    
-CURRENTLY, WORDS ARE DISCARDED BASED ON WHETHER THEY HAVE A DUPLICATE SCORE,
-NOT BASED ON THE UNIQUENESS OF THEIR LETTER COMBINATIONS. THIS PRESENTS A
-POTENTIAL PROBLEM, AS IT IS POSSIBLE FOR WORDS TO SHARE A SCORE BUT NOT A
-MASK.
-
-FOR EXAMPLE, IF THE FOLLOWING LETTERS WERE WEIGHTED AS SUCH:
-    
-    A - 1
-    E - 2
-    G - 4
-    M - 7
-    P - 5
-    S - 3
-    T - 6
-    
-THEN THE WORDS 'TAPES' AND 'GAMES' WOULD SHARE A SCORE (17), EVEN THOUGH NO LETTERS
-SHARE A WEIGHT, AND THE MASKING FOR EACH WORD WOULD BE DIFFERENT.
-    
-IT IS DEFINITELY WORTH REVISITNG THIS TO SEE IF THERE ARE INDEED SUCH CASES IN
-PRACTICE, AS IT HAS CONSEQUENCES FOR THE TRIPLET SEARCH.
-
 
 @author: Ryan Goetz
 @email: ryan.m.goetz@gmail.com
@@ -46,21 +19,29 @@ import os
 # CUSTOM FUNCTIONS
 # -----------------------------------------------------------------------------
 
+# a translator that uniquely identifies words, ignoring repeated letters
+def translate(word_):
+    A = 0
+    for letter in word_:
+        A |= 2**(ord(letter)-97) 
+    return A
+translate = np.vectorize(translate)
+
+
 # a vectorized score calculator
 def score_calc(word_):
-    A = np.ones(26,dtype=np.int64)
-    for letter in word_:
-        A[ord(letter)-97] *= 0
-    A = -1*(A-1)
-    score = sum(A*WEIGHTS)
+    A = translate(word_)
+    score = 0
+    for idx, weight in enumerate(WEIGHTS):
+        score += weight*(A & (2**idx))//(2**idx)
     return score
 score_calc = np.vectorize(score_calc)
 
 
 # Vectorize ord()
-def vect_ord(character):
+def v_ord(character):
     return ord(character)-97
-vect_ord = np.vectorize(vect_ord)
+v_ord = np.vectorize(v_ord)
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -101,11 +82,14 @@ np.savetxt(WEIGHTS_PATH(), WEIGHTS, fmt='%s')
 f = open(WORDLE_PATH(),'r')
 WORDS = np.asarray(f.read().splitlines())
 f.close()
+TRANS = translate(WORDS)
+_ , UNIQUES = np.unique(TRANS, return_index = True)
+WORDS = WORDS[UNIQUES]
 SCORES = score_calc(WORDS)
-SORTED_WORDS = WORDS[SCORES.argsort()]
-SCORES = score_calc(SORTED_WORDS)
-_ , UNIQUES = np.unique(SCORES, return_index=True)
-SORTED_WORDS = SORTED_WORDS[UNIQUES][::-1]
+SORTED_WORDS = WORDS[SCORES.argsort()][::-1]
+#SCORES = score_calc(SORTED_WORDS)
+#_ , UNIQUES = np.unique(SCORES, return_index=True)
+#SORTED_WORDS = SORTED_WORDS[UNIQUES][::-1]
 np.savetxt(WORDS_PATH(), SORTED_WORDS, fmt='%s')
 
 
@@ -113,7 +97,7 @@ np.savetxt(WORDS_PATH(), SORTED_WORDS, fmt='%s')
 WORD_MASK = np.ones((26,len(SORTED_WORDS)), dtype=np.int8)
 for idx in range(len(SORTED_WORDS)):
     word = SORTED_WORDS[idx]
-    IDXS = vect_ord(list(word))
+    IDXS = v_ord(list(word))
     WORD_MASK[IDXS,idx] = 0
 np.savetxt(MASK_PATH(), WORD_MASK.T,fmt='%s')
 

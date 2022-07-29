@@ -48,6 +48,8 @@ vect_ord = np.vectorize(vect_ord)
 # -----------------------------------------------------------------------------
 
 
+# this seems like a daunting series of loops, but the break conditions actually
+# mean the total number of calculations is very small
 WEIGHTS = np.loadtxt(WEIGHTS_PATH(), dtype=np.int64)
 SORTED_WORDS = np.loadtxt(WORDS_PATH(), dtype=str)
 WORD_MASK = np.loadtxt(MASK_PATH())
