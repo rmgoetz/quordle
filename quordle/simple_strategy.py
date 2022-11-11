@@ -22,43 +22,46 @@ the triplet contain letters from any of the other words.
 import numpy as np
 from make_data import score_calc, v_ord, WEIGHTS_PATH, WORDS_PATH, MASK_PATH
 
-
-# this seems like a daunting series of loops, but the break conditions actually
-# mean the total number of calculations is very small
-WEIGHTS = np.loadtxt(WEIGHTS_PATH(), dtype=np.int64)
-SORTED_WORDS = np.loadtxt(WORDS_PATH(), dtype=str)
-WORD_MASK = np.loadtxt(MASK_PATH()).T
-SCORES = score_calc(SORTED_WORDS)
-MAX_SCORE = SCORES[0]
-BATCH_1 = SORTED_WORDS[SCORES >= MAX_SCORE//3]
-SCORES_1 = SCORES[:len(BATCH_1)] 
-for word_1, score_1 in zip(BATCH_1, SCORES_1):
-    if score_1 < MAX_SCORE//3:
-        break
-    letter_ords_1 = v_ord(list(word_1)) 
-    first_mask = np.prod(WORD_MASK[letter_ords_1], axis=0)
-    first_mask = first_mask != 0
-    BATCH_2 = SORTED_WORDS[first_mask]
-    SCORES_2 = SCORES[first_mask]
-    BATCH_2 = BATCH_2[SCORES_2 >= (MAX_SCORE-score_1)//2]
-    SCORES_2 = SCORES_2[:len(BATCH_2)]
-    for word_2, score_2 in zip(BATCH_2, SCORES_2):
-        if score_2 < (MAX_SCORE-score_1)//2:
+def run():
+    # this seems like a daunting series of loops, but the break conditions actually
+    # mean the total number of calculations is very small
+    WEIGHTS = np.loadtxt(WEIGHTS_PATH(), dtype=np.int64)
+    SORTED_WORDS = np.loadtxt(WORDS_PATH(), dtype=str)
+    WORD_MASK = np.loadtxt(MASK_PATH()).T
+    SCORES = score_calc(SORTED_WORDS)
+    MAX_SCORE = SCORES[0]
+    BATCH_1 = SORTED_WORDS[SCORES >= MAX_SCORE//3]
+    SCORES_1 = SCORES[:len(BATCH_1)] 
+    for word_1, score_1 in zip(BATCH_1, SCORES_1):
+        if score_1 < MAX_SCORE//3:
             break
-        letter_ords_2 = v_ord(list(word_2))
-        second_mask = np.prod(WORD_MASK[letter_ords_2], axis=0)
-        second_mask = second_mask != 0
-        second_mask = first_mask*second_mask
-        BATCH_3 = SORTED_WORDS[second_mask]
-        SCORES_3 = SCORES[second_mask]
-        BATCH_3 = BATCH_3[SCORES_3 >= (MAX_SCORE-score_1-score_2)]
-        SCORES_3 = SCORES[:len(BATCH_3)]
-        for word_3, score_3 in zip(BATCH_3, SCORES_3):
-            if score_3 < (MAX_SCORE-score_1-score_2):
+        letter_ords_1 = v_ord(list(word_1)) 
+        first_mask = np.prod(WORD_MASK[letter_ords_1], axis=0)
+        first_mask = first_mask != 0
+        BATCH_2 = SORTED_WORDS[first_mask]
+        SCORES_2 = SCORES[first_mask]
+        BATCH_2 = BATCH_2[SCORES_2 >= (MAX_SCORE-score_1)//2]
+        SCORES_2 = SCORES_2[:len(BATCH_2)]
+        for word_2, score_2 in zip(BATCH_2, SCORES_2):
+            if score_2 < (MAX_SCORE-score_1)//2:
                 break
-            if score_1 + score_2 + score_3 > MAX_SCORE:
-                MAX_SCORE = score_1+score_2+score_3
-                TRIPLET = [word_1, word_2, word_3]           
-print(TRIPLET)
+            letter_ords_2 = v_ord(list(word_2))
+            second_mask = np.prod(WORD_MASK[letter_ords_2], axis=0)
+            second_mask = second_mask != 0
+            second_mask = first_mask*second_mask
+            BATCH_3 = SORTED_WORDS[second_mask]
+            SCORES_3 = SCORES[second_mask]
+            BATCH_3 = BATCH_3[SCORES_3 >= (MAX_SCORE-score_1-score_2)]
+            SCORES_3 = SCORES[:len(BATCH_3)]
+            for word_3, score_3 in zip(BATCH_3, SCORES_3):
+                if score_3 < (MAX_SCORE-score_1-score_2):
+                    break
+                if score_1 + score_2 + score_3 > MAX_SCORE:
+                    MAX_SCORE = score_1+score_2+score_3
+                    TRIPLET = [word_1, word_2, word_3]           
+    print(TRIPLET)
     
 
+if __name__ == "__main__":
+
+    run()
